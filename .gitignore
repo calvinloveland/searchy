@@ -1,0 +1,4 @@
+__pycache__/
+searchy-env/
+**.pyc
+backend/crawler/data
