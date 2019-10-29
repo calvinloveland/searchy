@@ -30,7 +30,7 @@ def robotsAllowed(url):
 
 
 def parsePage(pageURL):
-    response = requests.get(pageURL, timeout = (10,10), stream = False)
+    response = requests.get(pageURL, timeout=(10, 10), stream=False)
     if response.status_code != 200:
         print("bad return code!! " + str(response.status_code))
     soup = BeautifulSoup(response.text, "html.parser")
@@ -54,40 +54,41 @@ def crawlWeb(toDoFile, doneFile):
     doneLinks = list(utils.parseLinkFile(doneFile).queue)
     print("Parsed links: " + str(len(doneLinks)))
     lastParsed = time.time()
-    lastUrl = ''
-    url = ''
+    lastUrl = ""
+    url = ""
     try:
         while True:
             try:
-                url = toCrawl.get()
-                if not robotsAllowed(url):
-                    print("Not allowed at: " + url)
-                elif url in doneLinks:
-                    print("Already parsed: " + url)
-                else:
-                    while time.time() - lastParsed < 0.25:
-                        if baseUrl(url) == lastUrl:
-                            toCrawl.put(url)
-                            print("Skipping for now: " + url)
-                            url = toCrawl.get()
-                        else:
-                            time.sleep(0.01)
-                    print(str(toCrawl.qsize()) + "-Parsing:" + url)
-                    pageLinks, pageText = parsePage(url)
-                    lastParsed = time.time()
-                    lastUrl = baseUrl(url)
-                    linkFile = open("data/" + url.replace("/", "|") + ".link", "w+")
-                    textFile = open("data/" + url.replace("/", "|") + ".txt", "w+")
-                    for link in pageLinks:
-                        if link not in doneLinks and toCrawl.qsize() < 10000:
-                            toCrawl.put(link)
-                        linkFile.write(link + "\n")
-                    linkFile.close()
-                    textFile.write(pageText)
-                    textFile.close()
-                with open(doneFile, "a") as df:
-                    df.write(url + '\n')
-                    doneLinks.append(url)
+                with utils.timeout(seconds=20):
+                    url = toCrawl.get()
+                    if not robotsAllowed(url):
+                        print("Not allowed at: " + url)
+                    elif url in doneLinks:
+                        print("Already parsed: " + url)
+                    else:
+                        while time.time() - lastParsed < 0.25:
+                            if baseUrl(url) == lastUrl:
+                                toCrawl.put(url)
+                                print("Skipping for now: " + url)
+                                url = toCrawl.get()
+                            else:
+                                time.sleep(0.01)
+                        print(str(toCrawl.qsize()) + "-Parsing:" + url)
+                        pageLinks, pageText = parsePage(url)
+                        lastParsed = time.time()
+                        lastUrl = baseUrl(url)
+                        linkFile = open("data/" + url.replace("/", "|") + ".link", "w+")
+                        textFile = open("data/" + url.replace("/", "|") + ".txt", "w+")
+                        for link in pageLinks:
+                            if link not in doneLinks and toCrawl.qsize() < 10000:
+                                toCrawl.put(link)
+                            linkFile.write(link + "\n")
+                        linkFile.close()
+                        textFile.write(pageText)
+                        textFile.close()
+                    with open(doneFile, "a") as df:
+                        df.write(url + "\n")
+                        doneLinks.append(url)
             except Exception as e:
                 print(e)
                 print(url)
@@ -95,7 +96,7 @@ def crawlWeb(toDoFile, doneFile):
         print("さようなら")
         with open(toDoFile, "w") as tdf:
             tdf.write(url + "\n")
-            for i in range(math.floor(toCrawl.qsize()/10)):
+            for i in range(math.floor(toCrawl.qsize() / 10)):
                 tdf.write(toCrawl.get() + "\n")
 
 
