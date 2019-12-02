@@ -4,12 +4,16 @@ from pymongo import MongoClient
 from backend.shared import utils
 
 ingestDir = sys.argv[1]
+priorityLinks = list(utils.parseLinkFile(sys.argv[2]).queue)
 print("Ingesting at: " + ingestDir)
 files = [
     os.path.join(ingestDir, f)
     for f in os.listdir(ingestDir)
     if os.path.isfile(os.path.join(ingestDir, f))
 ]
+
+for l in priorityLinks:
+    files.insert(0,os.path.join(ingestDir, l))
 
 fileCount = len(files)
 
@@ -28,7 +32,7 @@ for f in files:
         i += 1
         if i % 1000 == 0:
             print(str(i) + "/" + str(fileCount) + " " + f)
-        with utils.timeout(seconds=10):
+        with utils.timeout(seconds=60):
             if f.endswith(".link"):
                 links = list(utils.parseLinkFile(f).queue)
                 collection.update_one(
